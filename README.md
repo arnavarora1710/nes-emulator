@@ -13,7 +13,7 @@ make
 
 ## Future Work
 
-After completing the standard NES emulation, want to explore;
+After completing the standard NES emulation, want to explore:
 
 **Esoteric CPU Emulation**: Implementing 6502 instruction set using unconventional Turing-complete systems
 - **MOV-only Computing**: Exploring single-instruction architectures
