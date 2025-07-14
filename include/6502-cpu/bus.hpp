@@ -25,36 +25,21 @@ public:
 	Bus();
 	~Bus() = default;
 
+	// Device management
+	template <typename DeviceType, typename... Args>
+	DeviceType &addDevice(Args &&...args);
+
+	// Generic device access by type
+	template <typename DeviceType>
+	DeviceType *getDevice() const;
+
 	// Core bus operations
 	uint8_t read(uint16_t address);
 	void write(uint16_t address, uint8_t data);
 
-	// Device management
-	template <typename DeviceType, typename... Args>
-	DeviceType &addDevice(Args &&...args)
-	{
-		auto device = std::make_shared<DeviceType>(std::forward<Args>(args)...);
-		devices.push_back(device);
-		return *device;
-	}
-
 	// Convenient access to common devices
-	CPU &getCPU() const { return *cpu; }
-	Memory &getRAM() const { return *ram; }
-
-	// Generic device access by type
-	template <typename DeviceType>
-	DeviceType *getDevice() const
-	{
-		for (const auto &device : devices)
-		{
-			if (auto typed_device = dynamic_cast<DeviceType *>(device.get()))
-			{
-				return typed_device;
-			}
-		}
-		return nullptr;
-	}
+	CPU &getCPU() const;
+	Memory &getRAM() const;
 
 private:
 	std::vector<DevicePtr> devices;
