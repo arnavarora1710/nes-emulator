@@ -6,7 +6,7 @@
 #include <vector>
 
 namespace AddressingMode {
-	using AddressingFunc = std::function<uint8_t()>;
+    using AddressingFunc = std::function<uint8_t()>;
     uint8_t IMP(); uint8_t IMM();
     uint8_t ZP0(); uint8_t ZPX();
     uint8_t ZPY(); uint8_t REL();
@@ -16,7 +16,7 @@ namespace AddressingMode {
 };
 
 namespace Instructions {
-	using InstructionFunc = std::function<uint8_t()>;
+    using InstructionFunc = std::function<uint8_t()>;
     uint8_t ADC(); uint8_t AND(); uint8_t ASL(); uint8_t BCC();
     uint8_t BCS(); uint8_t BEQ(); uint8_t BIT(); uint8_t BMI();
     uint8_t BNE(); uint8_t BPL(); uint8_t BRK(); uint8_t BVC();
@@ -36,17 +36,17 @@ namespace Instructions {
 };
 
 struct Instruction {
-	std::string name;
-	Instructions::InstructionFunc operation;
-	AddressingMode::AddressingFunc addrMode;
-	std::uint8_t cycles;
+    std::string name;
+    Instructions::InstructionFunc operation;
+    AddressingMode::AddressingFunc addrMode;
+    std::uint8_t cycles;
 };
 
 struct ISA {
-	ISA();
-	~ISA() = default;
+    ISA();
+    ~ISA() = default;
 
-	uint8_t execute(uint8_t opcode) const;
+    uint8_t execute(uint8_t opcode) const;
 
-	std::vector<Instruction> instructions;
+    std::vector<Instruction> instructions;
 };

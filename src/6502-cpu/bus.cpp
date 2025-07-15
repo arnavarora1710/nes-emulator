@@ -21,14 +21,14 @@ DeviceType &Bus::addDevice(Args &&...args)
 template <typename DeviceType>
 DeviceType *Bus::getDevice() const
 {
-	for (const auto &device : devices)
-	{
-		if (auto typed_device = dynamic_cast<DeviceType *>(device.get()))
-		{
-			return typed_device;
-		}
-	}
-	return nullptr;
+    for (const auto &device : devices)
+    {
+        if (auto typed_device = dynamic_cast<DeviceType *>(device.get()))
+        {
+            return typed_device;
+        }
+    }
+    return nullptr;
 }
 
 uint8_t Bus::read(uint16_t address)
