@@ -5,18 +5,37 @@
 #include <string>
 #include <vector>
 
-namespace AddressingMode {
-    using AddressingFunc = std::function<uint8_t()>;
+using Register = uint8_t;
+using ProgramCounter = uint16_t;
+
+struct Registers {
+    // Registers for CPU state and execution storage
+    Register A, X, Y, SP;
+    ProgramCounter PC;
+
+    // status byte with 8 bits, each representing a different status flag
+    Register Status; 
+};
+
+struct CPUState {
+    uint8_t fetched { 0 };
+    uint16_t temp { 0 };
+    uint16_t absAddr { 0 };
+    uint16_t relAddr { 0 };
+    uint8_t cycles { 0 };
+};
+
+struct ISA {
+    using InstructionFunc = std::function<uint8_t()>;
+    // Addressing modes
     uint8_t IMP(); uint8_t IMM();
     uint8_t ZP0(); uint8_t ZPX();
     uint8_t ZPY(); uint8_t REL();
     uint8_t ABS(); uint8_t ABX();
     uint8_t ABY(); uint8_t IND();
     uint8_t IZX(); uint8_t IZY();
-};
 
-namespace Instructions {
-    using InstructionFunc = std::function<uint8_t()>;
+    // Opcodes
     uint8_t ADC(); uint8_t AND(); uint8_t ASL(); uint8_t BCC();
     uint8_t BCS(); uint8_t BEQ(); uint8_t BIT(); uint8_t BMI();
     uint8_t BNE(); uint8_t BPL(); uint8_t BRK(); uint8_t BVC();
@@ -33,20 +52,22 @@ namespace Instructions {
     uint8_t TSX(); uint8_t TXA(); uint8_t TXS(); uint8_t TYA();
 
     uint8_t XXX();
-};
 
-struct Instruction {
-    std::string name;
-    Instructions::InstructionFunc operation;
-    AddressingMode::AddressingFunc addrMode;
-    std::uint8_t cycles;
-};
+    struct Instruction {
+        std::string name;
+        InstructionFunc operation;
+        InstructionFunc addrMode;
+        std::uint8_t cycles;
+    };
 
-struct ISA {
-    ISA();
+    ISA() = delete;
+    ISA(Registers& registers, CPUState& cpuState);
+
     ~ISA() = default;
 
     uint8_t execute(uint8_t opcode) const;
 
     std::vector<Instruction> instructions;
+    Registers m_registers;
+    CPUState& m_cpuState;
 };

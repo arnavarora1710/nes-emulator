@@ -19,14 +19,16 @@ public:
         INTERRUPT_DISABLE_BIT = (1 << 2),     // Interrupt disable flag
         DECIMAL_BIT = (1 << 3),               // Decimal mode flag
         BREAK_CMD_BIT = (1 << 4),             // Break command flag
-        OVERFLOW_BIT = (1 << 5),              // Overflow flag
-        SIGN_BIT = (1 << 6),                  // Sign flag (negative)
+        UNUSED_BIT = (1 << 5),                // Unused flag
+        OVERFLOW_BIT = (1 << 6),              // Overflow flag
+        SIGN_BIT = (1 << 7),                  // Sign flag (negative)
     };
+
 
     // constructors and destructors
     // delete the default constructor to ensure CPU is always created with a Bus reference
     CPU() = delete;
-    CPU(Bus &bus) : m_bus(bus) {}
+    CPU(Bus &bus) : m_bus(bus), m_isa(m_registers, m_cpuState) {}
     ~CPU() = default;
 
     uint8_t read(uint16_t address) override;
@@ -46,15 +48,14 @@ private:
     // Reference to the bus for communication with other devices
     Bus &m_bus;
 
-    // Registers for CPU state and execution storage
-    Register A, X, Y, SP;
-    ProgramCounter PC;
+    // CPU registers
+    Registers m_registers;
 
-    // status byte with 8 bits, each representing a different status flag
-    Register Status; 
+    // CPU state
+    CPUState m_cpuState;
 
     // instruction set architecture (ISA) for the CPU
-    ISA isa;
+    ISA m_isa;
 
     uint8_t getFlag(StatusBit bit) const;
 
