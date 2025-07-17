@@ -1,10 +1,9 @@
 #pragma once
 
-#include <cstddef>
 #include <array>
 #include "device.hpp"
 
-class Memory : public Device {
+class Memory final : public Device {
 public:
     static constexpr std::size_t MEMORY_SIZE = 64 * 1024; // 64KB
     static constexpr uint16_t MEMORY_START_ADDRESS = 0x0000;
@@ -16,7 +15,7 @@ public:
 
     void write(uint16_t address, uint8_t data) override;
 
-    bool isAddressInRange(uint16_t address) const override {
+    [[nodiscard]] bool isAddressInRange(const uint16_t address) const override {
         return MEMORY_START_ADDRESS <= address && address <= MEMORY_END_ADDRESS;
     }
 

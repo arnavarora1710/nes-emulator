@@ -99,8 +99,8 @@ uint8_t ISA::execute(uint8_t opcode) const
 {
     const Instruction &instr = instructions[opcode];
     uint8_t cur_cycles = instr.cycles;
-    uint8_t additional_cycles_1 = instr.addrMode();
-    uint8_t additional_cycles_2 = instr.operation();
+    const uint8_t additional_cycles_1 = instr.addrMode();
+    const uint8_t additional_cycles_2 = instr.operation();
     cur_cycles += (additional_cycles_1 & additional_cycles_2);
     return cur_cycles;
 }

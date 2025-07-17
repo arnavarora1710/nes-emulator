@@ -5,7 +5,11 @@ uint8_t ISA::IMP() {
     return 0; 
 }
 
-uint8_t ISA::IMM() { return 0; }
+uint8_t ISA::IMM() { 
+    m_cpuState.absAddr = m_registers.PC++;
+    return 0; 
+}
+
 uint8_t ISA::ZP0() { return 0; }
 uint8_t ISA::ZPX() { return 0; }
 uint8_t ISA::ZPY() { return 0; }

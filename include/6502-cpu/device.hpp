@@ -15,5 +15,5 @@ public:
     virtual void write(uint16_t address, uint8_t data) = 0;
 
     // address response range
-    virtual bool isAddressInRange(uint16_t address) const = 0;
+    [[nodiscard]] virtual bool isAddressInRange(uint16_t address) const = 0;
 };

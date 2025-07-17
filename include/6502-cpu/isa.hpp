@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <functional>
 #include <string>
 #include <vector>
@@ -65,9 +64,9 @@ struct ISA {
 
     ~ISA() = default;
 
-    uint8_t execute(uint8_t opcode) const;
+    [[nodiscard]] uint8_t execute(uint8_t opcode) const;
 
     std::vector<Instruction> instructions;
-    Registers m_registers;
+    Registers& m_registers;
     CPUState& m_cpuState;
 };

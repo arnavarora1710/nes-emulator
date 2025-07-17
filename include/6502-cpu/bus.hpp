@@ -15,10 +15,10 @@ class Bus {
 public:
     using DevicePtr = std::shared_ptr<Device>;
 
-    class BusError : public std::runtime_error
+    class BusError final : public std::runtime_error
     {
     public:
-        explicit BusError(std::string_view message)
+        explicit BusError(const std::string_view message)
             : std::runtime_error(std::string(message)) {}
     };
 
@@ -34,12 +34,12 @@ public:
     DeviceType *getDevice() const;
 
     // Core bus operations
-    uint8_t read(uint16_t address);
-    void write(uint16_t address, uint8_t data);
+    [[nodiscard]] uint8_t read(uint16_t address) const;
+    void write(uint16_t address, uint8_t data) const;
 
     // Convenient access to common devices
-    CPU &getCPU() const;
-    Memory &getRAM() const;
+    [[nodiscard]] CPU &getCPU() const;
+    [[nodiscard]] Memory &getRAM() const;
 
 private:
     std::vector<DevicePtr> devices;
@@ -48,6 +48,6 @@ private:
     CPU *cpu;
     Memory *ram;
 
-    // Helper method to find device for address
-    Device *findDeviceForAddress(uint16_t address) const;
+    // Helper method to find a device for address
+    [[nodiscard]] Device *findDeviceForAddress(uint16_t address) const;
 };

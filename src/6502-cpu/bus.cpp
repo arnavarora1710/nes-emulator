@@ -31,10 +31,8 @@ DeviceType *Bus::getDevice() const
     return nullptr;
 }
 
-uint8_t Bus::read(uint16_t address)
-{
-    Device *device = findDeviceForAddress(address);
-    if (device)
+uint8_t Bus::read(uint16_t address) const {
+    if (Device *device = findDeviceForAddress(address))
     {
         return device->read(address);
     }
@@ -42,10 +40,8 @@ uint8_t Bus::read(uint16_t address)
                    std::to_string(address));
 }
 
-void Bus::write(uint16_t address, uint8_t data)
-{
-    Device *device = findDeviceForAddress(address);
-    if (device)
+void Bus::write(uint16_t address, uint8_t data) const {
+    if (Device *device = findDeviceForAddress(address))
     {
         device->write(address, data);
         return;

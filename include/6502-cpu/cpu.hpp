@@ -1,14 +1,12 @@
 #pragma once
 
-#include <memory>
-
 #include "device.hpp"
 #include "isa.hpp"
 
 // forward declaration
 class Bus;
 
-class CPU : public Device {
+class CPU final : public Device {
 public:
     using Register = uint8_t;
     using ProgramCounter = uint16_t;
@@ -28,15 +26,15 @@ public:
     // constructors and destructors
     // delete the default constructor to ensure CPU is always created with a Bus reference
     CPU() = delete;
-    CPU(Bus &bus) : m_bus(bus), m_isa(m_registers, m_cpuState) {}
-    ~CPU() = default;
+    explicit CPU(Bus &bus) : m_bus(bus), m_isa(m_registers, m_cpuState) {}
+    ~CPU() override = default;
 
     uint8_t read(uint16_t address) override;
 
     void write(uint16_t address, uint8_t data) override;
 
     // No device can command the CPU to read or write directly.
-    bool isAddressInRange(uint16_t address) const override { return false; }
+    [[nodiscard]] bool isAddressInRange(uint16_t address) const override { return false; }
 
     // CPU operations
     void clock();
@@ -57,7 +55,7 @@ private:
     // instruction set architecture (ISA) for the CPU
     ISA m_isa;
 
-    uint8_t getFlag(StatusBit bit) const;
+    [[nodiscard]] uint8_t getFlag(StatusBit bit) const;
 
     void setFlag(StatusBit bit, bool value);
 };
