@@ -1,11 +1,12 @@
 #include "isa.hpp"
+#include "cpu.hpp"
 
 #define OP(op) [this]() { return op(); }
 #define AM(am) [this]() { return am(); }
 
-ISA::ISA(Registers& registers, CPUState& cpuState) : m_registers(registers), m_cpuState(cpuState)
+ISA::ISA(CPU& cpu) : m_cpu(cpu), m_registers(cpu.m_registers), m_cpuState(cpu.m_cpuState)
 {
-    instructions = {
+    m_instructions = {
         {"BRK", OP(BRK), AM(IMM), 7},        {"ORA", OP(ORA), AM(IZX), 6},        {"???", OP(XXX), AM(IMP), 2},
         {"???", OP(XXX), AM(IMP), 8},        {"???", OP(NOP), AM(IMP), 3},        {"ORA", OP(ORA), AM(ZP0), 3},
         {"ASL", OP(ASL), AM(ZP0), 5},        {"???", OP(XXX), AM(IMP), 5},        {"PHP", OP(PHP), AM(IMP), 3},
@@ -97,7 +98,7 @@ ISA::ISA(Registers& registers, CPUState& cpuState) : m_registers(registers), m_c
 
 uint8_t ISA::execute(uint8_t opcode) const
 {
-    const Instruction &instr = instructions[opcode];
+    const Instruction &instr = m_instructions[opcode];
     uint8_t cur_cycles = instr.cycles;
     const uint8_t additional_cycles_1 = instr.addrMode();
     const uint8_t additional_cycles_2 = instr.operation();

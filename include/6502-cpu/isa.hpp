@@ -24,6 +24,8 @@ struct CPUState {
     uint8_t cycles { 0 };
 };
 
+class CPU;
+
 struct ISA {
     using InstructionFunc = std::function<uint8_t()>;
     // Addressing modes
@@ -60,13 +62,14 @@ struct ISA {
     };
 
     ISA() = delete;
-    ISA(Registers& registers, CPUState& cpuState);
+    explicit ISA(CPU& cpu);
 
     ~ISA() = default;
 
     [[nodiscard]] uint8_t execute(uint8_t opcode) const;
 
-    std::vector<Instruction> instructions;
+    std::vector<Instruction> m_instructions;
+    CPU& m_cpu;
     Registers& m_registers;
     CPUState& m_cpuState;
 };

@@ -28,7 +28,7 @@ void CPU::setFlag(StatusBit bit, bool value)
 
 void CPU::clock() {
     if (m_cpuState.cycles == 0) {
-        uint8_t opcode = read(m_registers.PC++);
+        const uint8_t opcode = read(m_registers.PC++);
         setFlag(StatusBit::UNUSED_BIT, true);
         m_cpuState.cycles = m_isa.execute(opcode);
         setFlag(StatusBit::UNUSED_BIT, true);

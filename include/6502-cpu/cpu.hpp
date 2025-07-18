@@ -22,11 +22,10 @@ public:
         SIGN_BIT = (1 << 7),                  // Sign flag (negative)
     };
 
-
     // constructors and destructors
     // delete the default constructor to ensure CPU is always created with a Bus reference
     CPU() = delete;
-    explicit CPU(Bus &bus) : m_bus(bus), m_isa(m_registers, m_cpuState) {}
+    explicit CPU(Bus &bus) : m_bus(bus), m_isa(*this) {}
     ~CPU() override = default;
 
     uint8_t read(uint16_t address) override;
@@ -58,4 +57,6 @@ private:
     [[nodiscard]] uint8_t getFlag(StatusBit bit) const;
 
     void setFlag(StatusBit bit, bool value);
+
+    friend class ISA;
 };
