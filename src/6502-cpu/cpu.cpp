@@ -26,6 +26,14 @@ void CPU::setFlag(StatusBit bit, bool value)
         m_registers.Status &= ~static_cast<uint8_t>(bit);
 }
 
+uint8_t CPU::fetch() {
+    const auto& instr = m_isa.getInstruction(m_cpuState.opcode);
+    if (instr.addrMode != &ISA::IMP) {
+        m_cpuState.fetched = read(m_cpuState.absAddr);
+    }
+    return m_cpuState.fetched;
+}
+
 void CPU::clock() {
     if (m_cpuState.cycles == 0) {
         const uint8_t opcode = read(m_registers.PC++);

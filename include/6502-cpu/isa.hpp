@@ -17,6 +17,7 @@ struct Registers {
 };
 
 struct CPUState {
+    uint8_t opcode { 0 };
     uint8_t fetched { 0 };
     uint16_t temp { 0 };
     uint16_t absAddr { 0 };
@@ -27,7 +28,7 @@ struct CPUState {
 class CPU;
 
 struct ISA {
-    using InstructionFunc = std::function<uint8_t()>;
+    using InstructionFunc = uint8_t(ISA::*)();
     // Addressing modes
     uint8_t IMP(); uint8_t IMM();
     uint8_t ZP0(); uint8_t ZPX();
@@ -66,6 +67,7 @@ struct ISA {
 
     ~ISA() = default;
 
+    [[nodiscard]] Instruction getInstruction(uint8_t opcode) const;
     [[nodiscard]] uint8_t execute(uint8_t opcode) const;
 
     std::vector<Instruction> m_instructions;

@@ -1,8 +1,8 @@
 #include "isa.hpp"
 #include "cpu.hpp"
 
-#define OP(op) [this]() { return op(); }
-#define AM(am) [this]() { return am(); }
+#define OP(op) &ISA::op
+#define AM(am) &ISA::am
 
 ISA::ISA(CPU& cpu) : m_cpu(cpu), m_registers(cpu.m_registers), m_cpuState(cpu.m_cpuState)
 {
@@ -94,6 +94,10 @@ ISA::ISA(CPU& cpu) : m_cpu(cpu), m_registers(cpu.m_registers), m_cpuState(cpu.m_
         {"???", OP(NOP), AM(IMP), 4},        {"SBC", OP(SBC), AM(ABX), 4},        {"INC", OP(INC), AM(ABX), 7},
         {"???", OP(XXX), AM(IMP), 7},
     };
+}
+
+ISA::Instruction ISA::getInstruction(uint8_t opcode) const {
+    return m_instructions.at(opcode);
 }
 
 uint8_t ISA::execute(uint8_t opcode) const

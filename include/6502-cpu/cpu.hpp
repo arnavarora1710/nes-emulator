@@ -36,6 +36,7 @@ public:
     [[nodiscard]] bool isAddressInRange(uint16_t address) const override { return false; }
 
     // CPU operations
+    uint8_t fetch();
     void clock();
     void reset();
     void interrupt();
@@ -58,5 +59,5 @@ private:
 
     void setFlag(StatusBit bit, bool value);
 
-    friend class ISA;
+    friend struct ISA;
 };

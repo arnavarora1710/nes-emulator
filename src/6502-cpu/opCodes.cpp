@@ -1,6 +1,15 @@
 #include "isa.hpp"
+#include "cpu.hpp"
 
-uint8_t ISA::ADC() { return 0; } uint8_t ISA::AND() { return 0; } uint8_t ISA::ASL() { return 0; } uint8_t ISA::BCC() { return 0; }
+uint8_t ISA::AND() {
+    m_cpu.fetch();
+    m_registers.A &= m_cpuState.fetched;
+    m_cpu.setFlag(CPU::StatusBit::ZERO_BIT, m_registers.A == 0x00);
+    m_cpu.setFlag(CPU::StatusBit::SIGN_BIT, m_registers.A & 0x80);
+    return 1;
+}
+
+uint8_t ISA::ADC() { return 0; } uint8_t ISA::ASL() { return 0; } uint8_t ISA::BCC() { return 0; }
 uint8_t ISA::BCS() { return 0; } uint8_t ISA::BEQ() { return 0; } uint8_t ISA::BIT() { return 0; } uint8_t ISA::BMI() { return 0; }
 uint8_t ISA::BNE() { return 0; } uint8_t ISA::BPL() { return 0; } uint8_t ISA::BRK() { return 0; } uint8_t ISA::BVC() { return 0; }
 uint8_t ISA::BVS() { return 0; } uint8_t ISA::CLC() { return 0; } uint8_t ISA::CLD() { return 0; } uint8_t ISA::CLI() { return 0; }
