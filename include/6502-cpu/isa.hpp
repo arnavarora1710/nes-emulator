@@ -68,7 +68,7 @@ struct ISA {
     ~ISA() = default;
 
     [[nodiscard]] Instruction getInstruction(uint8_t opcode) const;
-    [[nodiscard]] uint8_t execute(uint8_t opcode) const;
+    [[nodiscard]] uint8_t execute(uint8_t opcode);
 
     std::vector<Instruction> m_instructions;
     CPU& m_cpu;

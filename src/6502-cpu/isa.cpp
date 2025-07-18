@@ -100,12 +100,12 @@ ISA::Instruction ISA::getInstruction(uint8_t opcode) const {
     return m_instructions.at(opcode);
 }
 
-uint8_t ISA::execute(uint8_t opcode) const
+uint8_t ISA::execute(uint8_t opcode)
 {
     const Instruction &instr = m_instructions[opcode];
     uint8_t cur_cycles = instr.cycles;
-    const uint8_t additional_cycles_1 = instr.addrMode();
-    const uint8_t additional_cycles_2 = instr.operation();
+    const uint8_t additional_cycles_1 = (this->*instr.addrMode)();
+    const uint8_t additional_cycles_2 = (this->*instr.operation)();
     cur_cycles += (additional_cycles_1 & additional_cycles_2);
     return cur_cycles;
 }
