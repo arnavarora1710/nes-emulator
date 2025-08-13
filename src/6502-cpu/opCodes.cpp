@@ -310,8 +310,48 @@ uint8_t ISA::LDY() {
     m_cpu.setFlag(CPU::StatusBit::SIGN_BIT, m_registers.Y & 0x80);
     return 1;
 }
-uint8_t ISA::LSR() { return 0; } uint8_t ISA::NOP() { return 0; } uint8_t ISA::ORA() { return 0; } uint8_t ISA::PHA() { return 0; }
-uint8_t ISA::PHP() { return 0; } uint8_t ISA::PLA() { return 0; } uint8_t ISA::PLP() { return 0; } uint8_t ISA::ROL() { return 0; }
+
+uint8_t ISA::LSR() {
+    m_cpu.fetch();
+    m_cpu.setFlag(CPU::StatusBit::CARRY_BIT, m_cpuState.fetched & 0x0001);
+    const auto result = static_cast<uint16_t>(m_cpuState.fetched) >> 1;
+    m_cpu.setFlag(CPU::StatusBit::ZERO_BIT, (result & 0x00FF) == 0x00);
+    m_cpu.setFlag(CPU::StatusBit::OVERFLOW_BIT, result & 0x80);
+
+    const auto instr = m_cpu.m_isa.getInstruction(m_cpuState.opcode);
+    if (instr.addrMode != &ISA::IMP) {
+        m_registers.A = result & 0x00FF;
+    } else {
+        m_cpu.write(m_cpuState.absAddr, result & 0x00FF);
+    }
+    return 0;
+}
+
+uint8_t ISA::NOP() {
+    switch (m_cpuState.opcode) {
+        case 0x1C:
+        case 0x3C:
+        case 0x5C:
+        case 0x7C:
+        case 0xDC:
+        case 0xFC:
+            return 1;
+        default: ;
+    }
+    return 0;
+}
+
+uint8_t ISA::ORA() {
+    m_cpu.fetch();
+    m_registers.A = m_registers.A | m_cpuState.fetched;
+    m_cpu.setFlag(CPU::StatusBit::ZERO_BIT, m_registers.A == 0);
+    m_cpu.setFlag(CPU::StatusBit::SIGN_BIT, m_registers.A & 0x80);
+    return 1;
+}
+
+uint8_t ISA::PHA() { return 0; }
+uint8_t ISA::PHP() { return 0; } uint8_t ISA::PLA() { return 0; } uint8_t ISA::PLP() { return 0; }
+uint8_t ISA::ROL() { return 0; }
 uint8_t ISA::ROR() { return 0; } uint8_t ISA::RTI() { return 0; } uint8_t ISA::RTS() { return 0; }
 
 uint8_t ISA::SBC() {
