@@ -43,3 +43,20 @@ void CPU::clock() {
     }
     m_cpuState.cycles--;
 }
+
+void CPU::reset() {
+    m_cpuState.absAddr = 0xFFFC;
+    const auto lo = read(m_cpuState.absAddr);
+    const auto hi = read(m_cpuState.absAddr + 1);
+
+    m_registers.PC = (lo << 8) | hi;
+
+    m_registers.A = m_registers.X = m_registers.Y = m_registers.Status = 0;
+    setFlag(StatusBit::UNUSED_BIT, true);
+
+    m_cpuState.absAddr = m_cpuState.relAddr = 0x0000;
+    m_cpuState.fetched = 0x00;
+
+    // Resetting state takes time
+    m_cpuState.cycles = 8;
+}

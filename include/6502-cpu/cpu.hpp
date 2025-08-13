@@ -25,7 +25,9 @@ public:
     // constructors and destructors
     // delete the default constructor to ensure CPU is always created with a Bus reference
     CPU() = delete;
-    explicit CPU(Bus &bus) : m_bus(bus), m_isa(*this) {}
+    explicit CPU(Bus &bus) : m_bus(bus), m_isa(*this) {
+        reset();
+    }
     ~CPU() override = default;
 
     uint8_t read(uint16_t address) override;
