@@ -95,7 +95,7 @@ uint8_t ISA::ZPY() {
 uint8_t ISA::REL() {
     m_cpuState.relAddr = m_cpu.read(m_registers.PC++);
     if (m_cpuState.relAddr & 0x80)
-        m_cpuState.absAddr |= 0x00FF;
+        m_cpuState.relAddr |= 0xFF00;
     return 0;
 }
 
