@@ -100,8 +100,9 @@ ISA::Instruction ISA::getInstruction(uint8_t opcode) const {
     return m_instructions.at(opcode);
 }
 
-uint8_t ISA::execute(uint8_t opcode)
+uint8_t ISA:: execute(uint8_t opcode)
 {
+    m_cpuState.opcode = opcode;
     const Instruction &instr = m_instructions[opcode];
     uint8_t cur_cycles = instr.cycles;
     const uint8_t additional_cycles_1 = (this->*instr.addrMode)();
