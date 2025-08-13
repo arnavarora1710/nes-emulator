@@ -145,8 +145,28 @@ uint8_t ISA::BPL() {
     return 0;
 }
 
-// TODO
-uint8_t ISA::BRK() { return 0; }
+uint8_t ISA::BRK() {
+    m_registers.PC++;
+
+    m_cpu.setFlag(CPU::StatusBit::INTERRUPT_DISABLE_BIT, true);
+    m_cpu.write(CPU::STK_PTR_OFFSET + m_registers.SP, (m_registers.PC >> 8) & 0x00FF);
+    m_registers.SP--;
+
+    m_cpu.write(CPU::STK_PTR_OFFSET + m_registers.SP, m_registers.PC & 0x00FF);
+    m_registers.SP--;
+
+    m_cpu.setFlag(CPU::StatusBit::BREAK_CMD_BIT, true);
+    m_cpu.write(CPU::STK_PTR_OFFSET + m_registers.SP, m_registers.Status);
+    m_registers.SP--;
+    m_cpu.setFlag(CPU::StatusBit::BREAK_CMD_BIT, false);
+
+    const auto nextAddrLo = static_cast<uint16_t>(m_cpu.read(0xFFFE));
+    const auto nextAddrHi = static_cast<uint16_t>(m_cpu.read(0xFFFF));
+
+    m_registers.PC = (nextAddrHi << 8) | nextAddrLo;
+
+    return 0;
+}
 
 uint8_t ISA::BVC() {
     if (m_cpu.getFlag(CPU::StatusBit::OVERFLOW_BIT) == 0) {
@@ -282,8 +302,15 @@ uint8_t ISA::JMP() {
     return 0;
 }
 
-// TODO
 uint8_t ISA::JSR() {
+    m_registers.PC--;
+
+    m_cpu.write(CPU::STK_PTR_OFFSET + m_registers.SP, (m_registers.PC >> 8) & 0x00FF);
+    m_registers.SP--;
+
+    m_cpu.write(CPU::STK_PTR_OFFSET + m_registers.SP, m_registers.PC & 0x00FF);
+    m_registers.SP--;
+
     return 0;
 }
 
@@ -349,10 +376,99 @@ uint8_t ISA::ORA() {
     return 1;
 }
 
-uint8_t ISA::PHA() { return 0; }
-uint8_t ISA::PHP() { return 0; } uint8_t ISA::PLA() { return 0; } uint8_t ISA::PLP() { return 0; }
-uint8_t ISA::ROL() { return 0; }
-uint8_t ISA::ROR() { return 0; } uint8_t ISA::RTI() { return 0; } uint8_t ISA::RTS() { return 0; }
+uint8_t ISA::PHA() {
+    m_cpu.write(CPU::STK_PTR_OFFSET + m_registers.SP, m_registers.A);
+    m_registers.SP--;
+    return 0;
+}
+
+uint8_t ISA::PHP() {
+    m_cpu.write(CPU::STK_PTR_OFFSET + m_registers.SP,
+                m_registers.Status |
+                static_cast<CPU::Register>(CPU::StatusBit::BREAK_CMD_BIT) |
+                static_cast<CPU::Register>(CPU::StatusBit::UNUSED_BIT)
+                );
+    m_cpu.setFlag(CPU::StatusBit::BREAK_CMD_BIT, false);
+    m_cpu.setFlag(CPU::StatusBit::UNUSED_BIT, false);
+    m_registers.SP--;
+    return 0;
+}
+
+uint8_t ISA::PLA() {
+    m_registers.SP++;
+    m_registers.A = m_cpu.read(CPU::STK_PTR_OFFSET + m_registers.SP);
+    m_cpu.setFlag(CPU::StatusBit::ZERO_BIT, m_registers.A == 0x00);
+    m_cpu.setFlag(CPU::StatusBit::SIGN_BIT, m_registers.A & 0x80);
+    return 0;
+}
+
+uint8_t ISA::PLP() {
+    m_registers.SP++;
+    m_registers.Status = m_cpu.read(CPU::STK_PTR_OFFSET + m_registers.SP);
+    m_cpu.setFlag(CPU::StatusBit::UNUSED_BIT, true);
+    return 0;
+}
+
+uint8_t ISA::ROL() {
+    m_cpu.fetch();
+    const auto carryBit = static_cast<uint16_t>(m_cpu.getFlag(CPU::StatusBit::CARRY_BIT));
+    const auto result = (static_cast<uint16_t>(m_cpuState.fetched) << 1) | carryBit;
+
+    m_cpu.setFlag(CPU::StatusBit::CARRY_BIT, (result & 0xFF00) > 0);
+    m_cpu.setFlag(CPU::StatusBit::ZERO_BIT, (result & 0x00FF) == 0x00);
+    m_cpu.setFlag(CPU::StatusBit::OVERFLOW_BIT, result & 0x80);
+
+    const auto instr = m_cpu.m_isa.getInstruction(m_cpuState.opcode);
+    if (instr.addrMode != &ISA::IMP) {
+        m_registers.A = result & 0x00FF;
+    } else {
+        m_cpu.write(m_cpuState.absAddr, result & 0x00FF);
+    }
+    return 0;
+}
+
+uint8_t ISA::ROR() {
+    m_cpu.fetch();
+    const auto carryBit = static_cast<uint16_t>(m_cpu.getFlag(CPU::StatusBit::CARRY_BIT));
+    const auto result = (carryBit << 7) | (static_cast<uint16_t>(m_cpuState.fetched) >> 1);
+
+    m_cpu.setFlag(CPU::StatusBit::CARRY_BIT, (result & 0xFF00) > 0);
+    m_cpu.setFlag(CPU::StatusBit::ZERO_BIT, (result & 0x00FF) == 0x00);
+    m_cpu.setFlag(CPU::StatusBit::OVERFLOW_BIT, result & 0x80);
+
+    const auto instr = m_cpu.m_isa.getInstruction(m_cpuState.opcode);
+    if (instr.addrMode != &ISA::IMP) {
+        m_registers.A = result & 0x00FF;
+    } else {
+        m_cpu.write(m_cpuState.absAddr, result & 0x00FF);
+    }
+    return 0;
+}
+
+uint8_t ISA::RTI() {
+    m_registers.SP++;
+    m_registers.Status = m_cpu.read(CPU::STK_PTR_OFFSET + m_registers.SP);
+    m_registers.Status &= ~(m_cpu.getFlag(CPU::StatusBit::BREAK_CMD_BIT));
+    m_registers.Status &= ~(m_cpu.getFlag(CPU::StatusBit::UNUSED_BIT));
+
+    m_registers.SP++;
+    m_registers.PC = static_cast<uint16_t>(m_cpu.read(CPU::STK_PTR_OFFSET + m_registers.SP));
+
+    m_registers.SP++;
+    m_registers.PC |= static_cast<uint16_t>(m_cpu.read(CPU::STK_PTR_OFFSET + m_registers.SP)) << 8;
+    return 0;
+}
+
+uint8_t ISA::RTS() {
+    m_registers.SP++;
+    m_registers.PC = static_cast<uint16_t>(m_cpu.read(CPU::STK_PTR_OFFSET + m_registers.SP));
+
+    m_registers.SP++;
+    m_registers.PC |= static_cast<uint16_t>(m_cpu.read(CPU::STK_PTR_OFFSET + m_registers.SP)) << 8;
+
+    m_registers.PC++;
+    return 0;
+}
 
 uint8_t ISA::SBC() {
     m_cpu.fetch();

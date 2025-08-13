@@ -22,6 +22,8 @@ public:
         SIGN_BIT = (1 << 7),                  // Sign flag (negative)
     };
 
+    static constexpr uint16_t STK_PTR_OFFSET = 0x0100;
+
     // constructors and destructors
     // delete the default constructor to ensure CPU is always created with a Bus reference
     CPU() = delete;

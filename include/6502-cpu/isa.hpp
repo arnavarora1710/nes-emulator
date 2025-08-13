@@ -19,7 +19,6 @@ struct Registers {
 struct CPUState {
     uint8_t opcode { 0 };
     uint8_t fetched { 0 };
-    uint16_t temp { 0 };
     uint16_t absAddr { 0 };
     uint16_t relAddr { 0 };
     uint8_t cycles { 0 };

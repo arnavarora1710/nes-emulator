@@ -60,3 +60,48 @@ void CPU::reset() {
     // Resetting state takes time
     m_cpuState.cycles = 8;
 }
+
+void CPU::interrupt() {
+    if (getFlag(StatusBit::INTERRUPT_DISABLE_BIT) == 0) {
+
+        write(STK_PTR_OFFSET + m_registers.SP, (m_registers.PC >> 8) & 0x00FF);
+        m_registers.SP--;
+        write(STK_PTR_OFFSET + m_registers.SP, m_registers.PC & 0x00FF);
+        m_registers.SP--;
+
+        setFlag(StatusBit::BREAK_CMD_BIT, false);
+        setFlag(StatusBit::UNUSED_BIT, true);
+        setFlag(StatusBit::INTERRUPT_DISABLE_BIT, true);
+
+        write(STK_PTR_OFFSET + m_registers.SP, m_registers.Status);
+        m_registers.SP--;
+
+        m_cpuState.absAddr = 0xFFFE;
+        const auto addrLo = read(m_cpuState.absAddr);
+        const auto addrHi = read(m_cpuState.absAddr + 1);
+        m_registers.PC = (addrHi << 8) | addrLo;
+
+        m_cpuState.cycles = 7;
+    }
+}
+
+void CPU::nmi() {
+    write(STK_PTR_OFFSET + m_registers.SP, (m_registers.PC >> 8) & 0x00FF);
+    m_registers.SP--;
+    write(STK_PTR_OFFSET + m_registers.SP, m_registers.PC & 0x00FF);
+    m_registers.SP--;
+
+    setFlag(StatusBit::BREAK_CMD_BIT, false);
+    setFlag(StatusBit::UNUSED_BIT, true);
+    setFlag(StatusBit::INTERRUPT_DISABLE_BIT, true);
+
+    write(STK_PTR_OFFSET + m_registers.SP, m_registers.Status);
+    m_registers.SP--;
+
+    m_cpuState.absAddr = 0xFFFA;
+    const auto addrLo = read(m_cpuState.absAddr);
+    const auto addrHi = read(m_cpuState.absAddr + 1);
+    m_registers.PC = (addrHi << 8) | addrLo;
+
+    m_cpuState.cycles = 8;
+}
