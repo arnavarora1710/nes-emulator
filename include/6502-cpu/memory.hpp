@@ -1,7 +1,11 @@
 #pragma once
 
 #include <array>
+
 #include "device.hpp"
+#include "json.hpp"
+
+using json = nlohmann::json;
 
 class Memory final : public Device {
 public:
@@ -18,6 +22,9 @@ public:
     [[nodiscard]] bool isAddressInRange(const uint16_t address) const override {
         return MEMORY_START_ADDRESS <= address && address <= MEMORY_END_ADDRESS;
     }
+
+    void load_rom(const json& rom_test);
+    bool check_final_state(const json& rom_test);
 
 private:
     std::array<uint8_t, MEMORY_SIZE> memory{};

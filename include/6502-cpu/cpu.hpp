@@ -2,8 +2,11 @@
 
 #include "device.hpp"
 #include "isa.hpp"
+#include "json.hpp"
 
 #include <map>
+
+using json = nlohmann::json;
 
 // forward declaration
 class Bus;
@@ -59,6 +62,8 @@ public:
     void interrupt();
     void nmi();
     void print_cpu_state() const;
+    void init_with_rom(const json& rom_test);
+    bool check_final_state(const json& rom_test);
 
 private:
     // Reference to the bus for communication with other devices

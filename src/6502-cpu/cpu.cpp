@@ -1,5 +1,5 @@
+#include <fstream>
 #include <iostream>
-#include <iomanip>
 
 #include "bus.hpp"
 #include "cpu.hpp"
@@ -108,23 +108,19 @@ void CPU::nmi() {
 }
 
 template <typename T>
-void print_hex_value(const std::string_view name, T value) {
-    std::cout << name << ": 0x"
-                  << std::hex << std::uppercase
-                  << std::setw(sizeof(T) * 2)
-                  << std::setfill('0')
-                  << static_cast<uint64_t>(value)
-                  << std::dec << '\n';
+void print_cpu_value(const std::string_view name, T value) {
+    std::cout << name << " = " << static_cast<uint64_t>(value) << std::endl;
 }
 
 void CPU::print_cpu_state() const {
-    std::cout << std::string(50, '-') << std::endl;
+    std::cout << std::endl << std::string(50, '-') << std::endl;
     std::cout << "Registers" << std::endl;
     std::cout << std::string(50, '-') << std::endl;
-    print_hex_value("Program Counter (PC)", m_registers.PC);
-    print_hex_value("Accumulator (A)", m_registers.A);
-    print_hex_value("Register X", m_registers.X);
-    print_hex_value("Register Y", m_registers.Y);
+    print_cpu_value("Program Counter (PC)", m_registers.PC);
+    print_cpu_value("Accumulator (A)", m_registers.A);
+    print_cpu_value("Register X", m_registers.X);
+    print_cpu_value("Register Y", m_registers.Y);
+    print_cpu_value("Status", m_registers.Status);
     for (const auto& [bit, bit_name] : status_bit_names) {
         if (getFlag(bit))
             std::cout << bit_name << " is set" << std::endl;
@@ -134,11 +130,32 @@ void CPU::print_cpu_state() const {
     std::cout << std::string(50, '-') << std::endl;
     std::cout << "CPU State" << std::endl;
     std::cout << std::string(50, '-') << std::endl;
-    print_hex_value("Number of Cycles", m_cpuState.cycles);
-    print_hex_value("Current Value Fetched", m_cpuState.fetched);
-    print_hex_value("Absolute Address", m_cpuState.absAddr);
-    print_hex_value("Relative Address", m_cpuState.relAddr);
-    print_hex_value("Current Opcode", m_cpuState.opcode);
+    print_cpu_value("Number of Cycles", m_cpuState.cycles);
+    print_cpu_value("Current Value Fetched", m_cpuState.fetched);
+    print_cpu_value("Absolute Address", m_cpuState.absAddr);
+    print_cpu_value("Relative Address", m_cpuState.relAddr);
+    print_cpu_value("Current Opcode", m_cpuState.opcode);
     std::cout << "Current Instruction: " << m_isa.getInstruction(m_cpuState.opcode).name << std::endl;
-    std::cout << std::string(50, '-') << std::endl;
+    std::cout << std::string(50, '-') << std::endl << std::endl;
+}
+
+void CPU::init_with_rom(const json& rom_test) {
+    const auto& initial_state = rom_test["initial"];
+
+    m_registers.PC = initial_state["pc"];
+    m_registers.A = initial_state["a"];
+    m_registers.X = initial_state["x"];
+    m_registers.Y = initial_state["y"];
+    m_registers.SP = initial_state["s"];
+    m_registers.Status = initial_state["p"];
+}
+
+bool CPU::check_final_state(const json& rom_test) {
+    const auto& final_state = rom_test["final"];
+    return m_registers.PC == final_state["pc"] and
+           m_registers.A == final_state["a"] and
+           m_registers.X == final_state["x"] and
+           m_registers.Y == final_state["y"] and
+           m_registers.SP == final_state["s"] and
+           m_registers.Status == final_state["p"];
 }

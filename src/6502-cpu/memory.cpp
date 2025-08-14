@@ -15,3 +15,26 @@ void Memory::write(uint16_t address, uint8_t data) {
     }
     memory[address - MEMORY_START_ADDRESS] = data;
 }
+
+void Memory::load_rom(const json& rom_test) {
+    const auto& initial_state = rom_test["initial"];
+    const auto& initial_ram = initial_state["ram"];
+
+    for (const auto& memory_desc : initial_ram) {
+        const std::size_t& address = memory_desc[0];
+        const int& data = memory_desc[1];
+        memory[address] = data;
+    }
+}
+
+bool Memory::check_final_state(const json &rom_test) {
+    const auto& final_state = rom_test["final"];
+    const auto& final_ram = final_state["ram"];
+
+    for (const auto& memory_desc : final_ram) {
+        const std::size_t& address = memory_desc[0];
+        const int& data = memory_desc[1];
+        if (memory[address] != data) return false;
+    }
+    return true;
+}
