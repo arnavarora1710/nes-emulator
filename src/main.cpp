@@ -15,11 +15,11 @@ bool performTest(const json& rom_test, int test_num, bool verbose = false) {
     const Bus bus{};
 
     CPU& cpu = bus.getCPU();
-    if (cpu.get_instr_name(test_num) == "???") {
+    if (cpu.getInstrName(test_num) == "???") {
         return true;
     }
     cpu.reset();
-    cpu.init_with_rom(rom_test);
+    cpu.initWithRom(rom_test);
     if (cpu.getFlag(CPU::StatusBit::DECIMAL_BIT) == true) {
         return true;
     }
@@ -30,8 +30,8 @@ bool performTest(const json& rom_test, int test_num, bool verbose = false) {
     const auto& v = rom_test["cycles"];
     do {
         cpu.clock();
-    } while (cpu.get_cycles() > 0);
-    return cpu.check_final_state(rom_test) and memory.check_final_state(rom_test);
+    } while (cpu.getCycles() > 0);
+    return cpu.checkFinalState(rom_test) and memory.check_final_state(rom_test);
 }
 
 int main() {

@@ -112,7 +112,7 @@ void print_cpu_value(const std::string_view name, T value) {
     std::cout << name << " = " << static_cast<uint64_t>(value) << std::endl;
 }
 
-void CPU::print_cpu_state() const {
+void CPU::printCpuState() const {
     std::cout << std::endl << std::string(50, '-') << std::endl;
     std::cout << "Registers" << std::endl;
     std::cout << std::string(50, '-') << std::endl;
@@ -139,7 +139,7 @@ void CPU::print_cpu_state() const {
     std::cout << std::string(50, '-') << std::endl << std::endl;
 }
 
-void CPU::init_with_rom(const json& rom_test) {
+void CPU::initWithRom(const json& rom_test) {
     const auto& initial_state = rom_test["initial"];
 
     m_registers.PC = initial_state["pc"];
@@ -150,7 +150,7 @@ void CPU::init_with_rom(const json& rom_test) {
     m_registers.Status = initial_state["p"];
 }
 
-bool CPU::check_final_state(const json& rom_test) {
+bool CPU::checkFinalState(const json& rom_test) {
     const auto& final_state = rom_test["final"];
     return m_registers.PC == final_state["pc"] and
            m_registers.A == final_state["a"] and
@@ -160,7 +160,7 @@ bool CPU::check_final_state(const json& rom_test) {
            m_registers.Status == final_state["p"];
 }
 
-std::string CPU::get_instr_name(uint8_t opcode) const {
+std::string CPU::getInstrName(uint8_t opcode) const {
     const auto instr = m_isa.getInstruction(opcode);
     return instr.name;
 }
