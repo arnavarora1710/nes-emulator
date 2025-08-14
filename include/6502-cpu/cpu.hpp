@@ -3,6 +3,8 @@
 #include "device.hpp"
 #include "isa.hpp"
 
+#include <map>
+
 // forward declaration
 class Bus;
 
@@ -20,6 +22,17 @@ public:
         UNUSED_BIT = (1 << 5),                // Unused flag
         OVERFLOW_BIT = (1 << 6),              // Overflow flag
         SIGN_BIT = (1 << 7),                  // Sign flag (negative)
+    };
+
+    const std::map<StatusBit, std::string> status_bit_names = {
+        { StatusBit::CARRY_BIT,             "CARRY_BIT" },
+        { StatusBit::ZERO_BIT,              "ZERO_BIT" },
+        { StatusBit::INTERRUPT_DISABLE_BIT, "INTERRUPT_DISABLE_BIT" },
+        { StatusBit::DECIMAL_BIT,           "DECIMAL_BIT" },
+        { StatusBit::BREAK_CMD_BIT,         "BREAK_CMD_BIT" },
+        { StatusBit::UNUSED_BIT,            "UNUSED_BIT" },
+        { StatusBit::OVERFLOW_BIT,          "OVERFLOW_BIT" },
+        { StatusBit::SIGN_BIT,              "SIGN_BIT" }
     };
 
     static constexpr uint16_t STK_PTR_OFFSET = 0x0100;
@@ -45,6 +58,7 @@ public:
     void reset();
     void interrupt();
     void nmi();
+    void print_cpu_state() const;
 
 private:
     // Reference to the bus for communication with other devices

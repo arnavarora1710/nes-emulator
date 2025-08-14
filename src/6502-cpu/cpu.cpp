@@ -1,4 +1,5 @@
-#include <cstdint>
+#include <iostream>
+#include <iomanip>
 
 #include "bus.hpp"
 #include "cpu.hpp"
@@ -58,7 +59,7 @@ void CPU::reset() {
     m_cpuState.fetched = 0x00;
 
     // Resetting state takes time
-    m_cpuState.cycles = 8;
+    m_cpuState.cycles = 0;
 }
 
 void CPU::interrupt() {
@@ -104,4 +105,40 @@ void CPU::nmi() {
     m_registers.PC = (addrHi << 8) | addrLo;
 
     m_cpuState.cycles = 8;
+}
+
+template <typename T>
+void print_hex_value(const std::string_view name, T value) {
+    std::cout << name << ": 0x"
+                  << std::hex << std::uppercase
+                  << std::setw(sizeof(T) * 2)
+                  << std::setfill('0')
+                  << static_cast<uint64_t>(value)
+                  << std::dec << '\n';
+}
+
+void CPU::print_cpu_state() const {
+    std::cout << std::string(50, '-') << std::endl;
+    std::cout << "Registers" << std::endl;
+    std::cout << std::string(50, '-') << std::endl;
+    print_hex_value("Program Counter (PC)", m_registers.PC);
+    print_hex_value("Accumulator (A)", m_registers.A);
+    print_hex_value("Register X", m_registers.X);
+    print_hex_value("Register Y", m_registers.Y);
+    for (const auto& [bit, bit_name] : status_bit_names) {
+        if (getFlag(bit))
+            std::cout << bit_name << " is set" << std::endl;
+        else
+            std::cout << bit_name << " is clear" << std::endl;
+    }
+    std::cout << std::string(50, '-') << std::endl;
+    std::cout << "CPU State" << std::endl;
+    std::cout << std::string(50, '-') << std::endl;
+    print_hex_value("Number of Cycles", m_cpuState.cycles);
+    print_hex_value("Current Value Fetched", m_cpuState.fetched);
+    print_hex_value("Absolute Address", m_cpuState.absAddr);
+    print_hex_value("Relative Address", m_cpuState.relAddr);
+    print_hex_value("Current Opcode", m_cpuState.opcode);
+    std::cout << "Current Instruction: " << m_isa.getInstruction(m_cpuState.opcode).name << std::endl;
+    std::cout << std::string(50, '-') << std::endl;
 }
