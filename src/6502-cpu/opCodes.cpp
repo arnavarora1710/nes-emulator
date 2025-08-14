@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "isa.hpp"
 #include "cpu.hpp"
 
@@ -19,10 +21,9 @@ uint8_t ISA::ADC() {
 
     // so writing out the truth table,
     // overflow happens if
-    const auto tmp1 = static_cast<uint16_t>(m_registers.A ^ m_cpuState.fetched);
-    const auto tmp2 = static_cast<uint16_t>(m_registers.A ^ result);
-    m_cpu.setFlag(CPU::StatusBit::OVERFLOW_BIT, ~tmp1 & tmp2 & 0x0080);
-
+    const auto tmp1 = static_cast<uint16_t>(m_registers.A ^ m_cpuState.fetched) & 0x0080;
+    const auto tmp2 = (static_cast<uint16_t>(m_registers.A) ^ result) & 0x0080;
+    m_cpu.setFlag(CPU::StatusBit::OVERFLOW_BIT, !tmp1 && tmp2);
     m_registers.A = result & 0x00FF;
     return 1;
 }
@@ -40,10 +41,10 @@ uint8_t ISA::ASL() {
     const auto result = static_cast<uint16_t>(m_cpuState.fetched) << 1;
     m_cpu.setFlag(CPU::StatusBit::CARRY_BIT, (result & 0xFF00) > 0);
     m_cpu.setFlag(CPU::StatusBit::ZERO_BIT, (result & 0x00FF) == 0x00);
-    m_cpu.setFlag(CPU::StatusBit::OVERFLOW_BIT, result & 0x80);
+    m_cpu.setFlag(CPU::StatusBit::SIGN_BIT, result & 0x80);
 
     const auto instr = m_cpu.m_isa.getInstruction(m_cpuState.opcode);
-    if (instr.addrMode != &ISA::IMP) {
+    if (instr.addrMode == &ISA::IMP) {
         m_registers.A = result & 0x00FF;
     } else {
         m_cpu.write(m_cpuState.absAddr, result & 0x00FF);
@@ -98,8 +99,8 @@ uint8_t ISA::BIT() {
     m_cpu.fetch();
     const auto result = m_cpuState.fetched & m_registers.A;
     m_cpu.setFlag(CPU::StatusBit::ZERO_BIT, (result & 0x00FF) == 0x00);
-    m_cpu.setFlag(CPU::StatusBit::SIGN_BIT, (m_cpuState.fetched << 7));
-    m_cpu.setFlag(CPU::StatusBit::OVERFLOW_BIT, (m_cpuState.fetched << 6));
+    m_cpu.setFlag(CPU::StatusBit::SIGN_BIT, m_cpuState.fetched & (1 << 7));
+    m_cpu.setFlag(CPU::StatusBit::OVERFLOW_BIT, m_cpuState.fetched & (1 << 6));
     return 0;
 }
 
@@ -132,23 +133,24 @@ uint8_t ISA::BNE() {
 }
 
 uint8_t ISA::BPL() {
+    int additionalCycles = 0;
     if (m_cpu.getFlag(CPU::StatusBit::SIGN_BIT) == 0) {
-        m_cpuState.cycles++;
+        additionalCycles++;
         m_cpuState.absAddr = m_registers.PC + m_cpuState.relAddr;
 
         const auto absAddrHi = m_cpuState.absAddr & 0xFF00;
         const auto pcHi = m_registers.PC & 0xFF00;
-        if (absAddrHi != pcHi) m_cpuState.cycles++;
+        if (absAddrHi != pcHi) additionalCycles++;
 
         m_registers.PC = m_cpuState.absAddr;
     }
-    return 0;
+    return additionalCycles;
 }
 
 uint8_t ISA::BRK() {
+    // ignoring the padding byte next to the opcode
     m_registers.PC++;
 
-    m_cpu.setFlag(CPU::StatusBit::INTERRUPT_DISABLE_BIT, true);
     m_cpu.write(CPU::STK_PTR_OFFSET + m_registers.SP, (m_registers.PC >> 8) & 0x00FF);
     m_registers.SP--;
 
@@ -164,6 +166,8 @@ uint8_t ISA::BRK() {
     const auto nextAddrHi = static_cast<uint16_t>(m_cpu.read(0xFFFF));
 
     m_registers.PC = (nextAddrHi << 8) | nextAddrLo;
+
+    m_cpu.setFlag(CPU::StatusBit::INTERRUPT_DISABLE_BIT, true);
 
     return 0;
 }
@@ -221,7 +225,7 @@ uint8_t ISA::CMP() {
     const auto result = static_cast<uint16_t>(m_registers.A - m_cpuState.fetched);
     m_cpu.setFlag(CPU::StatusBit::CARRY_BIT, m_registers.A >= m_cpuState.fetched);
     m_cpu.setFlag(CPU::StatusBit::ZERO_BIT, (result & 0x00FF) == 0);
-    m_cpu.setFlag(CPU::StatusBit::OVERFLOW_BIT, result & 0x0080);
+    m_cpu.setFlag(CPU::StatusBit::SIGN_BIT, result & 0x0080);
     return 1;
 }
 
@@ -230,24 +234,24 @@ uint8_t ISA::CPX() {
     const auto result = static_cast<uint16_t>(m_registers.X - m_cpuState.fetched);
     m_cpu.setFlag(CPU::StatusBit::CARRY_BIT, m_registers.X >= m_cpuState.fetched);
     m_cpu.setFlag(CPU::StatusBit::ZERO_BIT, (result & 0x00FF) == 0);
-    m_cpu.setFlag(CPU::StatusBit::OVERFLOW_BIT, result & 0x0080);
-    return 1;
+    m_cpu.setFlag(CPU::StatusBit::SIGN_BIT, result & 0x0080);
+    return 0;
 }
 
 uint8_t ISA::CPY() {
     m_cpu.fetch();
     const auto result = static_cast<uint16_t>(m_registers.Y - m_cpuState.fetched);
     m_cpu.setFlag(CPU::StatusBit::CARRY_BIT, m_registers.Y >= m_cpuState.fetched);
-    m_cpu.setFlag(CPU::StatusBit::ZERO_BIT, (result & 0x00FF) == 0);
-    m_cpu.setFlag(CPU::StatusBit::OVERFLOW_BIT, result & 0x0080);
-    return 1;
+    m_cpu.setFlag(CPU::StatusBit::ZERO_BIT, (result & 0x00FF) == 0x0000);
+    m_cpu.setFlag(CPU::StatusBit::SIGN_BIT, result & 0x0080);
+    return 0;
 }
 
 uint8_t ISA::DEC() {
     m_cpu.fetch();
     const auto result = m_cpuState.fetched - 1;
     m_cpu.write(m_cpuState.absAddr, result & 0x00FF);
-    m_cpu.setFlag(CPU::StatusBit::OVERFLOW_BIT, (result & 0x00FF) == 0x0000);
+    m_cpu.setFlag(CPU::StatusBit::ZERO_BIT, (result & 0x00FF) == 0x0000);
     m_cpu.setFlag(CPU::StatusBit::SIGN_BIT, result & 0x0080);
     return 0;
 }
@@ -278,7 +282,7 @@ uint8_t ISA::INC() {
     m_cpu.fetch();
     const auto result = m_cpuState.fetched + 1;
     m_cpu.write(m_cpuState.absAddr, result & 0x00FF);
-    m_cpu.setFlag(CPU::StatusBit::OVERFLOW_BIT, (result & 0x00FF) == 0x0000);
+    m_cpu.setFlag(CPU::StatusBit::ZERO_BIT, (result & 0x00FF) == 0x0000);
     m_cpu.setFlag(CPU::StatusBit::SIGN_BIT, result & 0x0080);
     return 0;
 }
@@ -303,14 +307,16 @@ uint8_t ISA::JMP() {
 }
 
 uint8_t ISA::JSR() {
-    m_registers.PC--;
-
     m_cpu.write(CPU::STK_PTR_OFFSET + m_registers.SP, (m_registers.PC >> 8) & 0x00FF);
     m_registers.SP--;
 
     m_cpu.write(CPU::STK_PTR_OFFSET + m_registers.SP, m_registers.PC & 0x00FF);
     m_registers.SP--;
 
+    const uint16_t hiByte = m_cpu.read(m_registers.PC++);
+    m_cpuState.absAddr = (hiByte << 8) | m_cpuState.absAddr;
+
+    m_registers.PC = m_cpuState.absAddr;
     return 0;
 }
 
@@ -343,10 +349,10 @@ uint8_t ISA::LSR() {
     m_cpu.setFlag(CPU::StatusBit::CARRY_BIT, m_cpuState.fetched & 0x0001);
     const auto result = static_cast<uint16_t>(m_cpuState.fetched) >> 1;
     m_cpu.setFlag(CPU::StatusBit::ZERO_BIT, (result & 0x00FF) == 0x00);
-    m_cpu.setFlag(CPU::StatusBit::OVERFLOW_BIT, result & 0x80);
+    m_cpu.setFlag(CPU::StatusBit::SIGN_BIT, result & 0x80);
 
     const auto instr = m_cpu.m_isa.getInstruction(m_cpuState.opcode);
-    if (instr.addrMode != &ISA::IMP) {
+    if (instr.addrMode == &ISA::IMP) {
         m_registers.A = result & 0x00FF;
     } else {
         m_cpu.write(m_cpuState.absAddr, result & 0x00FF);
@@ -405,6 +411,7 @@ uint8_t ISA::PLA() {
 uint8_t ISA::PLP() {
     m_registers.SP++;
     m_registers.Status = m_cpu.read(CPU::STK_PTR_OFFSET + m_registers.SP);
+    m_cpu.setFlag(CPU::StatusBit::BREAK_CMD_BIT, false);
     m_cpu.setFlag(CPU::StatusBit::UNUSED_BIT, true);
     return 0;
 }
@@ -414,12 +421,12 @@ uint8_t ISA::ROL() {
     const auto carryBit = static_cast<uint16_t>(m_cpu.getFlag(CPU::StatusBit::CARRY_BIT));
     const auto result = (static_cast<uint16_t>(m_cpuState.fetched) << 1) | carryBit;
 
-    m_cpu.setFlag(CPU::StatusBit::CARRY_BIT, (result & 0xFF00) > 0);
+    m_cpu.setFlag(CPU::StatusBit::CARRY_BIT, result & 0xFF00);
     m_cpu.setFlag(CPU::StatusBit::ZERO_BIT, (result & 0x00FF) == 0x00);
-    m_cpu.setFlag(CPU::StatusBit::OVERFLOW_BIT, result & 0x80);
+    m_cpu.setFlag(CPU::StatusBit::SIGN_BIT, result & 0x80);
 
     const auto instr = m_cpu.m_isa.getInstruction(m_cpuState.opcode);
-    if (instr.addrMode != &ISA::IMP) {
+    if (instr.addrMode == &ISA::IMP) {
         m_registers.A = result & 0x00FF;
     } else {
         m_cpu.write(m_cpuState.absAddr, result & 0x00FF);
@@ -429,15 +436,15 @@ uint8_t ISA::ROL() {
 
 uint8_t ISA::ROR() {
     m_cpu.fetch();
-    const auto carryBit = static_cast<uint16_t>(m_cpu.getFlag(CPU::StatusBit::CARRY_BIT));
-    const auto result = (carryBit << 7) | (static_cast<uint16_t>(m_cpuState.fetched) >> 1);
+    const auto carryBit = m_cpu.getFlag(CPU::StatusBit::CARRY_BIT);
+    const auto result = static_cast<uint16_t>(carryBit << 7) | (static_cast<uint16_t>(m_cpuState.fetched) >> 1);
 
-    m_cpu.setFlag(CPU::StatusBit::CARRY_BIT, (result & 0xFF00) > 0);
+    m_cpu.setFlag(CPU::StatusBit::CARRY_BIT, m_cpuState.fetched & 0x01);
     m_cpu.setFlag(CPU::StatusBit::ZERO_BIT, (result & 0x00FF) == 0x00);
-    m_cpu.setFlag(CPU::StatusBit::OVERFLOW_BIT, result & 0x80);
+    m_cpu.setFlag(CPU::StatusBit::SIGN_BIT, result & 0x80);
 
     const auto instr = m_cpu.m_isa.getInstruction(m_cpuState.opcode);
-    if (instr.addrMode != &ISA::IMP) {
+    if (instr.addrMode == &ISA::IMP) {
         m_registers.A = result & 0x00FF;
     } else {
         m_cpu.write(m_cpuState.absAddr, result & 0x00FF);
@@ -448,8 +455,8 @@ uint8_t ISA::ROR() {
 uint8_t ISA::RTI() {
     m_registers.SP++;
     m_registers.Status = m_cpu.read(CPU::STK_PTR_OFFSET + m_registers.SP);
-    m_registers.Status &= ~(m_cpu.getFlag(CPU::StatusBit::BREAK_CMD_BIT));
-    m_registers.Status &= ~(m_cpu.getFlag(CPU::StatusBit::UNUSED_BIT));
+    m_cpu.setFlag(CPU::StatusBit::BREAK_CMD_BIT, false);
+    m_cpu.setFlag(CPU::StatusBit::UNUSED_BIT, true);
 
     m_registers.SP++;
     m_registers.PC = static_cast<uint16_t>(m_cpu.read(CPU::STK_PTR_OFFSET + m_registers.SP));

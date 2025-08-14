@@ -33,8 +33,11 @@ bool Memory::check_final_state(const json &rom_test) {
 
     for (const auto& memory_desc : final_ram) {
         const std::size_t& address = memory_desc[0];
-        const int& data = memory_desc[1];
-        if (memory[address] != data) return false;
+        const uint8_t expected = memory_desc[1];
+        const uint8_t actual = memory[address];
+        if (actual != expected) {
+            return false;
+        }
     }
     return true;
 }

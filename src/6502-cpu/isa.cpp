@@ -7,7 +7,7 @@
 ISA::ISA(CPU& cpu) : m_cpu(cpu), m_registers(cpu.m_registers), m_cpuState(cpu.m_cpuState)
 {
     m_instructions = {
-        {"BRK", OP(BRK), AM(IMM), 7},        {"ORA", OP(ORA), AM(IZX), 6},        {"???", OP(XXX), AM(IMP), 2},
+        {"BRK", OP(BRK), AM(IMP), 7},        {"ORA", OP(ORA), AM(IZX), 6},        {"???", OP(XXX), AM(IMP), 2},
         {"???", OP(XXX), AM(IMP), 8},        {"???", OP(NOP), AM(IMP), 3},        {"ORA", OP(ORA), AM(ZP0), 3},
         {"ASL", OP(ASL), AM(ZP0), 5},        {"???", OP(XXX), AM(IMP), 5},        {"PHP", OP(PHP), AM(IMP), 3},
         {"ORA", OP(ORA), AM(IMM), 2},        {"ASL", OP(ASL), AM(IMP), 2},        {"???", OP(XXX), AM(IMP), 2},
@@ -100,7 +100,7 @@ ISA::Instruction ISA::getInstruction(uint8_t opcode) const {
     return m_instructions.at(opcode);
 }
 
-uint8_t ISA:: execute(uint8_t opcode)
+uint8_t ISA::execute(uint8_t opcode)
 {
     m_cpuState.opcode = opcode;
     const Instruction &instr = m_instructions[opcode];

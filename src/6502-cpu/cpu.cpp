@@ -159,3 +159,8 @@ bool CPU::check_final_state(const json& rom_test) {
            m_registers.SP == final_state["s"] and
            m_registers.Status == final_state["p"];
 }
+
+std::string CPU::get_instr_name(uint8_t opcode) const {
+    const auto instr = m_isa.getInstruction(opcode);
+    return instr.name;
+}

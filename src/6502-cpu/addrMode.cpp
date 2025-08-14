@@ -22,8 +22,18 @@ uint8_t ISA::IMM() {
 // Access memory at the given address (need to store in uint16_t)
 uint8_t ISA::ABS() {
     const uint16_t loByte = m_cpu.read(m_registers.PC++);
-    const uint16_t hiByte = m_cpu.read(m_registers.PC++);
-    m_cpuState.absAddr = (hiByte << 8) | loByte;
+
+    // interesting edge case where if jumping overwrites the
+    // instruction being executed, we need to read the high byte later
+    // https://github.com/SingleStepTests/ProcessorTests/issues/65
+    const auto instr = getInstruction(m_cpuState.opcode);
+    if (instr.operation != &ISA::JSR) {
+        const uint16_t hiByte = m_cpu.read(m_registers.PC++);
+        m_cpuState.absAddr = (hiByte << 8) | loByte;
+    } else {
+        m_cpuState.absAddr = loByte;
+    }
+
     return 0;
 }
 
@@ -32,8 +42,8 @@ uint8_t ISA::ABS() {
 // Also, if the address spills to the next page, return 1 for
 // an additional clock cycle
 uint8_t ISA::ABX() {
-    const uint16_t highByte = m_cpu.read(m_registers.PC++);
     const uint16_t lowByte = m_cpu.read(m_registers.PC++);
+    const uint16_t highByte = m_cpu.read(m_registers.PC++);
 
     m_cpuState.absAddr = (highByte << 8) | lowByte;
     m_cpuState.absAddr += m_registers.X;
@@ -50,8 +60,8 @@ uint8_t ISA::ABX() {
 // Also, if the address spills to the next page, return 1 for
 // an additional clock cycle
 uint8_t ISA::ABY() {
-    const uint16_t highByte = m_cpu.read(m_registers.PC++);
     const uint16_t lowByte = m_cpu.read(m_registers.PC++);
+    const uint16_t highByte = m_cpu.read(m_registers.PC++);
 
     m_cpuState.absAddr = (highByte << 8) | lowByte;
     m_cpuState.absAddr += m_registers.Y;

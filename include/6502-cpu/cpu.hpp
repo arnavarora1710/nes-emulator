@@ -64,6 +64,11 @@ public:
     void print_cpu_state() const;
     void init_with_rom(const json& rom_test);
     bool check_final_state(const json& rom_test);
+    [[nodiscard]] std::string get_instr_name(uint8_t opcode) const;
+    [[nodiscard]] uint8_t get_cycles() const {
+        return m_cpuState.cycles;
+    }
+    [[nodiscard]] uint8_t getFlag(StatusBit bit) const;
 
 private:
     // Reference to the bus for communication with other devices
@@ -77,8 +82,6 @@ private:
 
     // instruction set architecture (ISA) for the CPU
     ISA m_isa;
-
-    [[nodiscard]] uint8_t getFlag(StatusBit bit) const;
 
     void setFlag(StatusBit bit, bool value);
 
