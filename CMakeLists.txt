@@ -9,6 +9,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(GCC_COVERAGE_COMPILE_FLAGS -g -O0 -Wall -Wextra -Wpedantic -fsanitize=address -fsanitize=undefined)
 
 include_directories(
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/include/6502-cpu
         ${CMAKE_CURRENT_SOURCE_DIR}/include/third-party
 )
