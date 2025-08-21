@@ -16,7 +16,7 @@ void Memory::write(uint16_t address, uint8_t data) {
     memory[address - MEMORY_START_ADDRESS] = data;
 }
 
-void Memory::load_rom(const json& rom_test) {
+void Memory::loadROM(const json& rom_test) {
     const auto& initial_state = rom_test["initial"];
     const auto& initial_ram = initial_state["ram"];
 
@@ -27,7 +27,7 @@ void Memory::load_rom(const json& rom_test) {
     }
 }
 
-bool Memory::check_final_state(const json &rom_test) {
+bool Memory::checkFinalState(const json &rom_test) {
     const auto& final_state = rom_test["final"];
     const auto& final_ram = final_state["ram"];
 

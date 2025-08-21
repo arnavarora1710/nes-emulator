@@ -23,8 +23,8 @@ public:
         return MEMORY_START_ADDRESS <= address && address <= MEMORY_END_ADDRESS;
     }
 
-    void load_rom(const json& rom_test);
-    bool check_final_state(const json& rom_test);
+    void loadROM(const json& rom_test);
+    bool checkFinalState(const json& rom_test);
 
 private:
     std::array<uint8_t, MEMORY_SIZE> memory{};
