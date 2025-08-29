@@ -9,7 +9,7 @@
 using json = nlohmann::json;
 
 // forward declaration
-class Bus;
+class CPUBus;
 
 class CPU final : public Device {
 public:
@@ -43,7 +43,7 @@ public:
     // constructors and destructors
     // delete the default constructor to ensure CPU is always created with a Bus reference
     CPU() = delete;
-    explicit CPU(Bus &bus) : m_bus(bus), m_isa(*this) {
+    explicit CPU(CPUBus &bus) : m_bus(bus), m_isa(*this) {
         reset();
     }
     ~CPU() override = default;
@@ -53,7 +53,7 @@ public:
     void write(uint16_t address, uint8_t data) override;
 
     // No device can command the CPU to read or write directly.
-    [[nodiscard]] bool isAddressInRange(uint16_t address) const override { return false; }
+    [[nodiscard]] bool isAddressInRange(uint16_t _) const override { return false; }
 
     // CPU operations
     uint8_t fetch();
@@ -63,7 +63,7 @@ public:
     void nmi();
     void printCpuState() const;
     void initWithRom(const json& rom_test);
-    bool checkFinalState(const json& rom_test);
+    [[nodiscard]] bool checkFinalState(const json& rom_test) const;
 
     // Getter helpers
     [[nodiscard]] std::string getInstrName(uint8_t opcode) const;
@@ -72,9 +72,14 @@ public:
         return m_cpuState.cycles;
     }
 
+    // Setter helper
+    void setCycles(const uint8_t cycles) {
+        m_cpuState.cycles = cycles;
+    }
+
 private:
     // Reference to the bus for communication with other devices
-    Bus &m_bus;
+    CPUBus &m_bus;
 
     // CPU registers
     Registers m_registers;

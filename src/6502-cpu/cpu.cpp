@@ -1,15 +1,15 @@
 #include <fstream>
 #include <iostream>
 
-#include "bus.hpp"
+#include "cpu_bus.hpp"
 #include "cpu.hpp"
 
-uint8_t CPU::read(uint16_t address)
+uint8_t CPU::read(const uint16_t address)
 {
     return m_bus.read(address);
 }
 
-void CPU::write(uint16_t address, uint8_t data)
+void CPU::write(const uint16_t address, const uint8_t data)
 {
     m_bus.write(address, data);
 }
@@ -19,7 +19,7 @@ uint8_t CPU::getFlag(StatusBit bit) const
     return (m_registers.Status & static_cast<uint8_t>(bit)) ? 1 : 0;
 }
 
-void CPU::setFlag(StatusBit bit, bool value)
+void CPU::setFlag(StatusBit bit, const bool value)
 {
     if (value)
         m_registers.Status |= static_cast<uint8_t>(bit);
@@ -59,7 +59,7 @@ void CPU::reset() {
     m_cpuState.fetched = 0x00;
 
     // Resetting state takes time
-    m_cpuState.cycles = 0;
+    m_cpuState.cycles = 8;
 }
 
 void CPU::interrupt() {
@@ -150,7 +150,7 @@ void CPU::initWithRom(const json& rom_test) {
     m_registers.Status = initial_state["p"];
 }
 
-bool CPU::checkFinalState(const json& rom_test) {
+bool CPU::checkFinalState(const json& rom_test) const {
     const auto& final_state = rom_test["final"];
     return m_registers.PC == final_state["pc"] and
            m_registers.A == final_state["a"] and
