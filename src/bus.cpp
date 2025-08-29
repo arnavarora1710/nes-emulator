@@ -4,45 +4,16 @@
 // Local headers
 #include "bus.hpp"
 
-Bus::Bus()
-{
-    ram = &addDevice<Memory>();
-    cpu = &addDevice<CPU>(*this);
-}
-
-template <typename DeviceType, typename... Args>
-DeviceType &Bus::addDevice(Args &&...args) 
-{
-    auto device = std::make_shared<DeviceType>(std::forward<Args>(args)...);
-    devices.push_back(device);
-    return *device;
-}
-
-template <typename DeviceType>
-DeviceType *Bus::getDevice() const
-{
-    for (const auto &device : devices)
-    {
-        if (auto typed_device = dynamic_cast<DeviceType *>(device.get()))
-        {
-            return typed_device;
-        }
-    }
-    return nullptr;
-}
-
-uint8_t Bus::read(uint16_t address) const {
-    if (Device *device = findDeviceForAddress(address))
-    {
+uint8_t Bus::read(const uint16_t address) const {
+    if (Device *device = findDeviceForAddress(address)) {
         return device->read(address);
     }
     throw BusError("No device found for read at address: 0x" +
                    std::to_string(address));
 }
 
-void Bus::write(uint16_t address, uint8_t data) const {
-    if (Device *device = findDeviceForAddress(address))
-    {
+void Bus::write(const uint16_t address, const uint8_t data) const {
+    if (Device *device = findDeviceForAddress(address)) {
         device->write(address, data);
         return;
     }
@@ -50,32 +21,29 @@ void Bus::write(uint16_t address, uint8_t data) const {
                    std::to_string(address));
 }
 
-Device *Bus::findDeviceForAddress(uint16_t address) const
-{
-    for (const auto &device : devices)
-    {
-        if (device->isAddressInRange(address))
-        {
+void Bus::insertCartridge(const std::string& file_path) {
+    cartridge = new Cartridge(file_path);
+}
+
+Device *Bus::findDeviceForAddress(uint16_t address) const {
+    for (const auto &device : devices) {
+        if (device->isAddressInRange(address)) {
             return device.get();
         }
     }
     return nullptr;
 }
 
-CPU &Bus::getCPU() const
-{
-    if (cpu)
-    {
-        return *cpu;
-    }
-    throw BusError("CPU not found on the bus");
-}
-
-Memory &Bus::getRAM() const
-{
-    if (ram)
-    {
+Memory &Bus::getRAM() const {
+    if (ram) {
         return *ram;
     }
     throw BusError("RAM not found on the bus");
+}
+
+Cartridge &Bus::getCartridge() const {
+    if (cartridge) {
+        return *cartridge;
+    }
+    throw BusError("Cartridge not found on the bus");
 }
