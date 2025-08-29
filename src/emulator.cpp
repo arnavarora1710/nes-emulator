@@ -1,4 +1,4 @@
-#include "bus.hpp"
+#include "cpu_bus.hpp"
 #include "json.hpp"
 #include <filesystem>
 #include <iostream>
@@ -12,7 +12,7 @@ bool performTest(const json& rom_test, int test_num, bool verbose = false) {
     if (verbose)
         std::cout << rom_test << std::endl;
 
-    const Bus bus{};
+    const CPUBus bus { true };
 
     CPU& cpu = bus.getCPU();
     if (cpu.getInstrName(test_num) == "???") {
@@ -24,14 +24,16 @@ bool performTest(const json& rom_test, int test_num, bool verbose = false) {
         return true;
     }
 
-    Memory& memory = bus.getRAM();
-    memory.load_rom(rom_test);
+    // flush out init cycles
+    cpu.setCycles(0);
 
-    const auto& v = rom_test["cycles"];
+    Memory& memory = bus.getRAM();
+    memory.loadROM(rom_test);
+
     do {
         cpu.clock();
     } while (cpu.getCycles() > 0);
-    return cpu.checkFinalState(rom_test) and memory.check_final_state(rom_test);
+    return cpu.checkFinalState(rom_test) and memory.checkFinalState(rom_test);
 }
 
 int main() {

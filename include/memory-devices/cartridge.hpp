@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "device.hpp"
+
 using byte_t = std::uint8_t;
 
 struct ROM_Metadata {
@@ -28,13 +30,22 @@ namespace iNES {
     };
 };
 
-class Cartridge {
+class Cartridge final : public Device {
 public:
     static constexpr std::size_t HEADER_SIZE = 16; // 16 byte header
     static constexpr std::size_t PRG_BANK_SIZE = 16 * 1024; // 16KB per bank
     static constexpr std::size_t CHR_BANK_SIZE = 8 * 1024; // 8KB per bank
+
     explicit Cartridge(const std::string& file_path);
+
+    uint8_t read(uint16_t address) override;
+
+    void write(uint16_t address, uint8_t data) override;
+
+    [[nodiscard]] bool isAddressInRange(uint16_t address) const override;
+
+    [[nodiscard]] byte_t getMapperNumber() const;
 private:
     ROM_Metadata metadata{};
-    std::vector<byte_t> cartridge{};
+    std::vector<byte_t> cartridge{}, prg{}, chr{};
 };
